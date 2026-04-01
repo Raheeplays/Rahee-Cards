@@ -1,24 +1,49 @@
 name: Deploy to GitHub Pages
+
 on:
   push:
-    branches: ["main"]
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+    branches:
+      - main  # Ya jo bhi aapki branch ka naam hai
+
 jobs:
-  build-and-deploy:
+  build_site:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-      - run: npm install
-      - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist'
-      - uses: actions/deploy-pages@v4
+          # Cache hata diya hai error fix karne ke liye
 
+      - name: Install Dependencies
+        run: |
+          cd Rahee-Cards
+          npm install
+
+      - name: Build
+        run: |
+          cd Rahee-Cards
+          npm run build
+
+      - name: Upload Artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Build folder ka path yahan check karein (dist ya build)
+          path: './Rahee-Cards/dist'
+
+  deploy:
+    needs: build_site
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
